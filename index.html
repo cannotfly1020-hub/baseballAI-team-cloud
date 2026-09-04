@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  ⁠<link rel="stylesheet" href="HOME.css">⁠
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>BASEBALL BIO-AI ⚾ ホーム</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+
+  <header>
+    <div class="top-bar">
+      <div class="team-badge" id="team-badge-btn" title="チーム名を変更">
+        <span>🏷️</span>
+        <span id="current-team-name">安岡少年軟式野球部</span>
+        <span style="font-size:0.55rem;">▼</span>
+      </div>
+      <div class="cloud-status">
+        <div class="cloud-dot"></div>
+        <span id="cloud-status-text">接続完了</span>
+      </div>
+    </div>
+
+    <div class="app-title-card">
+      <h1>⚾ 野球AIバイオメカニクス 💥</h1>
+      <p>〜 成長を面白がる・褒め声かけ発見ベースボール 〜</p>
+    </div>
+  </header>
+
+  <!-- 投球 / 打撃 解析入口 -->
+  <section class="action-grid">
+    <a href="./pitching.html" class="action-card action-card-pitching">
+      <div class="action-icon">⚾</div>
+      <div class="action-info">
+        <div class="action-title">投球解析</div>
+        <div class="action-desc">歩幅・しなり・捻転差</div>
+      </div>
+    </a>
+
+    <a href="./batting.html" class="action-card action-card-batting">
+      <div class="action-icon">🏏</div>
+      <div class="action-info">
+        <div class="action-title">打撃解析</div>
+        <div class="action-desc">捻転差・前足壁・頭ブレ</div>
+      </div>
+    </a>
+  </section>
+
+  <!-- タブ切替 -->
+  <nav class="tabs-nav">
+    <button type="button" class="tab-btn active" id="tab-btn-player">👦 選手・保護者個人</button>
+    <button type="button" class="tab-btn coach" id="tab-btn-coach">🔒 👑 指導者メニュー</button>
+  </nav>
+
+  <!-- ==================== 👦 選手・保護者タブ ==================== -->
+  <main id="tab-player" class="tab-content active">
+    <div class="card-box">
+      <div class="card-header-bar">
+        <div class="card-header-title">
+          <span>📈</span>
+          <span>じぶんの成長カルテ・グラフ</span>
+        </div>
+        <select id="player-personal-select" class="select-sm"></select>
+      </div>
+
+      <div class="sub-mode-toggle">
+        <button type="button" class="sub-mode-btn active" id="btn-player-mode-trend">📈 成長推移グラフ</button>
+        <button type="button" class="sub-mode-btn" id="btn-player-mode-compare">🆚 過去データ比較</button>
+      </div>
+
+      <!-- 推移モード画面 -->
+      <div id="player-trend-area" style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="filter-row">
+          <select id="player-category-select" class="select-sm" style="flex:0.85;">
+            <option value="BATTING">🏏 打撃指標</option>
+            <option value="PITCHING">⚾ 投球指標</option>
+          </select>
+          <select id="player-metric-select" class="select-sm" style="flex:1.2;"></select>
+          <!-- 📌 初期表示ピン留めボタン -->
+          <button type="button" id="btn-pin-player-category" class="btn-pin" title="このカテゴリをアプリ起動時の初期表示に固定">
+            <span id="pin-icon-player">📌</span>
+            <span id="pin-text-player">初期固定</span>
+          </button>
+        </div>
+
+        <!-- 選択中の指標と単位バッジ -->
+        <div class="metric-info-badge" id="player-metric-badge">
+          <span id="player-metric-name">🔄 捻転差</span>
+          <span>最新: <b class="metric-info-val" id="player-metric-latest">-- °</b></span>
+        </div>
+
+        <div class="chips-scroll" id="player-period-chips">
+          <button type="button" class="period-chip" data-period="1W">1週間</button>
+          <button type="button" class="period-chip" data-period="1M">1ヶ月</button>
+          <button type="button" class="period-chip" data-period="1Y">1年</button>
+          <button type="button" class="period-chip" data-period="2Y">2年</button>
+          <button type="button" class="period-chip" data-period="3Y">3年</button>
+          <button type="button" class="period-chip" data-period="4Y">4年</button>
+          <button type="button" class="period-chip" data-period="5Y">5年</button>
+          <button type="button" class="period-chip" data-period="6Y">6年間</button>
+          <button type="button" class="period-chip active" data-period="ALL">全期間</button>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="player-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- 2地点比較モード画面 -->
+      <div id="player-compare-area" style="display: none; flex-direction: column; gap: 6px;">
+        <div class="filter-row">
+          <select id="player-compare-category-select" class="select-sm" style="flex:0.9;">
+            <option value="BATTING">🏏 打撃で比較</option>
+            <option value="PITCHING">⚾ 投球で比較</option>
+          </select>
+          <select id="player-compare-date-1" class="select-sm" style="flex:1.1;"></select>
+          <span style="font-weight:900; font-size:0.75rem; color:#f59e0b;">🆚</span>
+          <select id="player-compare-date-2" class="select-sm" style="flex:1.1;"></select>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="compare-table" id="player-compare-table">
+            <thead>
+              <tr><th>指標項目</th><th id="th-p-date1">過去</th><th id="th-p-date2">最新</th><th>進化差分</th></tr>
+            </thead>
+            <tbody id="player-compare-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== 👑 指導者タブ ==================== -->
+  <main id="tab-coach" class="tab-content">
+
+    <div class="diagnostic-banner" id="coach-diagnostic-banner"></div>
+
+    <!-- 1. パワプロ風 調子・ステータス一覧 -->
+    <div class="card-box" style="border-color: #f59e0b;">
+      <div class="card-header-bar">
+        <div class="card-header-title" style="color: #b45309;">
+          <span>⚾</span>
+          <span>部員の調子＆コンディション</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <button type="button" class="btn-sync-refresh" id="btn-coach-refresh">🔄 最新更新</button>
+          <span style="font-size:0.65rem; font-weight:800; color:#64748b;" id="coach-player-count">0名</span>
+        </div>
+      </div>
+
+      <div class="pawapro-grid" id="coach-pawapro-grid"></div>
+    </div>
+
+    <!-- 2. 連動個別分析エリア -->
+    <div class="active-analysis-box" id="coach-analysis-box">
+      <div class="praise-banner" id="coach-praise-banner">
+        <div class="praise-banner-icon" id="praise-icon">🌟</div>
+        <div class="praise-banner-content">
+          <div class="praise-banner-title" id="praise-title">今日の声かけヒント</div>
+          <div class="praise-banner-text" id="praise-text">選手カードをタップすると、その子の最新の成長と声かけアドバイスが表示されます！</div>
+        </div>
+      </div>
+
+      <div class="card-header-bar" style="border-bottom:none; padding-bottom:0;">
+        <div style="font-weight:900; font-size:0.88rem; color:#0369a1;" id="coach-selected-name">
+          👤 選手を選択してください
+        </div>
+        <div class="sub-mode-toggle" style="width: 170px;">
+          <button type="button" class="sub-mode-btn active" id="btn-coach-mode-trend">📈 推移</button>
+          <button type="button" class="sub-mode-btn" id="btn-coach-mode-compare">🆚 比較</button>
+        </div>
+      </div>
+
+      <!-- 指導者：推移グラフ画面 -->
+      <div id="coach-trend-area" style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="filter-row">
+          <select id="coach-category-select" class="select-sm" style="flex:0.85;">
+            <option value="BATTING">🏏 打撃指標</option>
+            <option value="PITCHING">⚾ 投球指標</option>
+          </select>
+          <select id="coach-metric-select" class="select-sm" style="flex:1.2;"></select>
+          <!-- 📌 指導者用ピン留めボタン -->
+          <button type="button" id="btn-pin-coach-category" class="btn-pin" title="指導者メニュー起動時の初期表示に固定">
+            <span id="pin-icon-coach">📌</span>
+            <span id="pin-text-coach">初期固定</span>
+          </button>
+        </div>
+
+        <div class="metric-info-badge" id="coach-metric-badge">
+          <span id="coach-metric-name">🔄 捻転差</span>
+          <span>最新: <b class="metric-info-val" id="coach-metric-latest">-- °</b></span>
+        </div>
+
+        <div class="chips-scroll" id="coach-period-chips">
+          <button type="button" class="period-chip" data-period="1W">1週</button>
+          <button type="button" class="period-chip" data-period="1M">1ヶ月</button>
+          <button type="button" class="period-chip" data-period="1Y">1年</button>
+          <button type="button" class="period-chip" data-period="2Y">2年</button>
+          <button type="button" class="period-chip" data-period="3Y">3年</button>
+          <button type="button" class="period-chip" data-period="4Y">4年</button>
+          <button type="button" class="period-chip" data-period="5Y">5年</button>
+          <button type="button" class="period-chip" data-period="6Y">6年</button>
+          <button type="button" class="period-chip active" data-period="ALL">全期間</button>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="coach-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- 指導者：2地点比較画面 -->
+      <div id="coach-compare-area" style="display: none; flex-direction: column; gap: 6px;">
+        <div class="filter-row">
+          <select id="coach-compare-category-select" class="select-sm" style="flex:0.9;">
+            <option value="BATTING">🏏 打撃で比較</option>
+            <option value="PITCHING">⚾ 投球で比較</option>
+          </select>
+          <select id="coach-compare-date-1" class="select-sm" style="flex:1.1;"></select>
+          <span style="font-weight:900; font-size:0.75rem; color:#f59e0b;">🆚</span>
+          <select id="coach-compare-date-2" class="select-sm" style="flex:1.1;"></select>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="compare-table">
+            <thead>
+              <tr><th>項目</th><th id="th-c-date1">過去</th><th id="th-c-date2">最新</th><th>進化差分</th></tr>
+            </thead>
+            <tbody id="coach-compare-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 指導者管理ツール -->
+    <div class="card-box" style="background:#f8fafc;">
+      <div class="card-header-bar">
+        <span style="font-size:0.75rem; font-weight:900; color:#64748b;">🛠️ チーム管理ツール</span>
+        <button type="button" id="btn-lock-coach" class="btn-danger-sm">🔒 画面をロック</button>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" id="btn-change-pass" class="period-chip">🔑 暗証番号の変更</button>
+        <button type="button" id="btn-cleanup-cloud" class="period-chip" style="color:#ef4444; border-color:#fca5a5;">🗑️ 誤送信データの整理・削除</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 暗証番号モーダル -->
+  <div class="modal-overlay" id="pass-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>🔒 指導者パスコード入力</span>
+        <button type="button" id="btn-close-pass-modal" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.75rem; font-weight:800; color:#64748b;">指導者専用メニューです。4桁の暗証番号を入力してください。（初期: 1234）</p>
+        <input type="password" id="input-passcode" maxlength="8" placeholder="****" style="padding:10px; font-size:1.2rem; text-align:center; font-weight:900; border:2px solid #0284c7; border-radius:10px;">
+        <button type="button" id="btn-submit-passcode" class="btn-submit">解除して開く</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- チーム名設定モーダル -->
+  <div class="modal-overlay" id="team-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>🏷️ チームアカウント設定</span>
+        <button type="button" id="btn-close-team-modal" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.75rem; font-weight:800; color:#64748b;">全員で同じチーム名を入力すると、クラウド上で全員のデータが1つに集約されます！</p>
+        <input type="text" id="input-team-name" placeholder="例: 安岡少年軟式野球部" style="padding:8px; font-size:1rem; font-weight:900; border:2px solid #0284c7; border-radius:8px;">
+        <button type="button" id="btn-save-team-name" class="btn-submit">保存して接続</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- クラウド整理削除モーダル -->
+  <div class="modal-overlay" id="cleanup-modal">
+    <div class="modal-card">
+      <div class="modal-header" style="background:#ef4444;">
+        <span>🗑️ クラウド誤送信データの整理</span>
+        <button type="button" id="btn-close-cleanup" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.75rem; font-weight:800; color:#ef4444;">※テスト送信などで不要になったデータをクラウドから完全に削除します。</p>
+        <select id="cleanup-player-select" class="select-sm" style="width:100%;"></select>
+        <button type="button" id="btn-exec-cleanup" class="btn-submit" style="background:#ef4444;">この選手の全クラウドデータを完全削除</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-box" class="toast-msg"></div>
+　⁠<script src="HOME.js"></script>
+</body>
+</html>
